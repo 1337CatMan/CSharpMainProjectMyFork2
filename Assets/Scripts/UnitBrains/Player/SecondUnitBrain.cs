@@ -26,13 +26,10 @@ namespace UnitBrains.Player
             IncreaseTemperature();
             for (int i = 0; i <= Temp; i++)
             {
-                    var projectile = CreateProjectile(forTarget);
-                    AddProjectileToList(projectile, intoList); 
+                var projectile = CreateProjectile(forTarget);
+                AddProjectileToList(projectile, intoList);
             }
             ///////////////////////////////////////           
-            var projectile = CreateProjectile(forTarget);
-            AddProjectileToList(projectile, intoList);
-            ///////////////////////////////////////
         }
 
         public override Vector2Int GetNextStep()
@@ -43,9 +40,28 @@ namespace UnitBrains.Player
         protected override List<Vector2Int> SelectTargets()
         {
             ///////////////////////////////////////
-            // Homework 1.4 (1st block, 4rd module)
-            ///////////////////////////////////////
             List<Vector2Int> result = GetReachableTargets();
+
+            if (result.Count == 0)
+            {
+                return new List<Vector2Int>();
+            }
+
+            Vector2Int Target = new Vector2Int();
+            float minDistance = float.MaxValue;
+            foreach (Vector2Int TargetEnemy in result)
+            {
+                float Distance = DistanceToOwnBase(TargetEnemy);
+                if (Distance < minDistance)
+                {
+                    minDistance = Distance;
+                    Target = TargetEnemy;
+                }
+            }
+
+            result.Clear();
+            result.Add(Target);
+
             while (result.Count > 1)
             {
                 result.RemoveAt(result.Count - 1);

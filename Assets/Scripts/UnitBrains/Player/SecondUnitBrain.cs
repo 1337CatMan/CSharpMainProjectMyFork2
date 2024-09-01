@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using Model;
 using Model.Runtime.Projectiles;
 using UnityEngine;
+using Utilities;
 
 namespace UnitBrains.Player
 {
@@ -12,7 +14,8 @@ namespace UnitBrains.Player
         private float _temperature = 0f;
         private float _cooldownTime = 0f;
         private bool _overheated;
-        
+        private List<Vector2Int> unreachableTargets;
+
         protected override void GenerateProjectiles(Vector2Int forTarget, List<BaseProjectile> intoList)
         {
             float overheatTemperature = OverheatTemperature;
@@ -34,7 +37,40 @@ namespace UnitBrains.Player
 
         public override Vector2Int GetNextStep()
         {
-            return base.GetNextStep();
+            List<Vector2Int> targets = SelectTargets();
+
+            Vector2Int unitPos = unit.Pos;
+            Vector2Int nextTarget = new Vector2Int(0, 0);
+            if (targets.Count > 0)
+            {
+                foreach (var target in targets)
+                {
+                    if (IsTargetInRange(target))
+                    {
+                        return unit.Pos;
+                    }
+                    else
+                    {
+                        nextTarget = target;
+                    }
+                }
+            }
+            else
+            {
+                int playerId = IsPlayerUnitBrain ? RuntimeModel.PlayerId : RuntimeModel.BotPlayerId;
+                Vector2Int enemyBase = runtimeModel.RoMap.Bases[playerId];
+                if (IsTargetInRange(enemyBase))
+                {
+                    return unit.Pos;
+                }
+                else
+                {
+                    unreachableTargets.Add(enemyBase);
+                    nextTarget = enemyBase;
+                }
+            }
+
+            return unitPos.CalcNextStepTowards(nextTarget);
         }
 
         protected override List<Vector2Int> SelectTargets()
@@ -49,6 +85,7 @@ namespace UnitBrains.Player
 
             Vector2Int Target = new Vector2Int();
             float minDistance = float.MaxValue;
+            unreachableTargets = new List<Vector2Int>();
             foreach (Vector2Int TargetEnemy in result)
             {
                 float Distance = DistanceToOwnBase(TargetEnemy);

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Model;
 using Model.Runtime.Projectiles;
@@ -16,7 +17,16 @@ namespace UnitBrains.Player
         private float _temperature = 0f;
         private float _cooldownTime = 0f;
         private bool _overheated;
+        private static int Counter = 0;
+        private int UnitNumber;
+        private const int MaxTargets = 3;
         private List<Vector2Int> TargetList = new List<Vector2Int>();
+
+        public SecondUnitBrain()
+        {
+            UnitNumber = Counter;
+            Counter++;
+        }
 
         protected override void GenerateProjectiles(Vector2Int forTarget, List<BaseProjectile> intoList)
         {
@@ -45,35 +55,34 @@ namespace UnitBrains.Player
         protected override List<Vector2Int> SelectTargets()
         {
             List<Vector2Int> result = GetAllTargets().ToList();
-            List<Vector2Int> NextStepList = new List<Vector2Int>();
-            float MinDistance = float.MaxValue;
+            List<Vector2Int> AllReachableTargets = GetReachableTargets();
+            int TargetNumber = UnitNumber < MaxTargets ? UnitNumber : UnitNumber % MaxTargets;
+            Vector2Int Tmp;
 
-            if (result.Count > 0)
+            if (result.Count == 0)
             {
-                Vector2Int MinDistanceObject = result[0];
-                foreach (Vector2Int target in result)
-                {
-                    float TmpDistansToBase = DistanceToOwnBase(target);
-                    if (TmpDistansToBase < MinDistance)
-                    {
-                        MinDistance = TmpDistansToBase;
-                        MinDistanceObject = target;
-                    }
-                }
-
-                result.Clear();
                 TargetList.Clear();
-                if (IsTargetInRange(MinDistanceObject))
-                    result.Add(MinDistanceObject);
+                Vector2Int enemyBase = runtimeModel.RoMap.Bases[IsPlayerUnitBrain ? RuntimeModel.PlayerId : RuntimeModel.BotPlayerId];
+                if (IsTargetInRange(enemyBase))
+                    result.Add(enemyBase);
                 else
-                    TargetList.Add(MinDistanceObject);
+                    TargetList.Add(enemyBase);
 
             }
             else
             {
-                TargetList.Clear();
-                Vector2Int enemyBase = runtimeModel.RoMap.Bases[IsPlayerUnitBrain ? RuntimeModel.PlayerId : RuntimeModel.BotPlayerId];
-                TargetList.Add(enemyBase);
+                SortByDistanceToOwnBase(result);
+                if (AllReachableTargets.Count == 0)
+                {
+                    TargetList.Add((result.Count - 1) < TargetNumber ? result[0] : result[TargetNumber]);
+                    result.Clear();
+                }
+                else
+                {
+                    Tmp = ((AllReachableTargets.Count - 1) < TargetNumber ? result[0] : result[TargetNumber]);
+                    result.Clear();
+                    result.Add(Tmp);
+                }
             }
             return result;
             ///////////////////////////////////////
@@ -93,8 +102,7 @@ namespace UnitBrains.Player
                 }
             }
         }
-
-        private int GetTemperature()
+                private int GetTemperature()
         {
             if (_overheated) return (int)OverheatTemperature;
             else return (int)_temperature;

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Codice.Client.BaseCommands.Differences;
 using Model;
 using Model.Runtime.Projectiles;
 using UnityEngine;
@@ -45,46 +46,73 @@ namespace UnitBrains.Player
 
         public override Vector2Int GetNextStep()
         {
-            if (TargetList.Count > 0)
-            {
-                return unit.Pos.CalcNextStepTowards(TargetList[0]);
-            }
-            return unit.Pos;
+            Vector2Int targetPosition;
+            targetPosition = TargetList.Count > 0 ? TargetList[0] : unit.Pos;
+            return IsTargetInRange(targetPosition) ? unit.Pos : base.GetNextStep();
         }
 
         protected override List<Vector2Int> SelectTargets()
         {
+            var iD = IsPlayerUnitBrain ? RuntimeModel.BotPlayerId : RuntimeModel.BotPlayerId;
+            var baseCoords = runtimeModel.RoMap.Bases[iD];
+
+            TargetList.Clear();
+
             List<Vector2Int> result = GetAllTargets().ToList();
             List<Vector2Int> AllReachableTargets = GetReachableTargets();
-            int TargetNumber = UnitNumber < MaxTargets ? UnitNumber : UnitNumber % MaxTargets;
-            Vector2Int Tmp;
+            List<Vector2Int> closestTargets = new List<Vector2Int>();
 
-            if (result.Count == 0)
+            SortByDistanceToOwnBase(result);
+
+            var closestTargetsCount = MaxTargets > AllReachableTargets.Count ? AllReachableTargets.Count : MaxTargets;
+            closestTargets.AddRange(AllReachableTargets.GetRange(0, closestTargetsCount));
+
+            var targetIndex = UnitNumber % MaxTargets;
+            var indexExist = targetIndex < closestTargets.Count && targetIndex > 0;
+
+            if (indexExist)
             {
-                TargetList.Clear();
-                Vector2Int enemyBase = runtimeModel.RoMap.Bases[IsPlayerUnitBrain ? RuntimeModel.PlayerId : RuntimeModel.BotPlayerId];
-                if (IsTargetInRange(enemyBase))
-                    result.Add(enemyBase);
-                else
-                    TargetList.Add(enemyBase);
-
+                TargetList.Add(closestTargets[targetIndex]);
+            }
+            else if (closestTargets.Count > 0)
+            {
+                TargetList.Add(closestTargets[0]);
             }
             else
             {
-                SortByDistanceToOwnBase(result);
-                if (AllReachableTargets.Count == 0)
-                {
-                    TargetList.Add((result.Count - 1) < TargetNumber ? result[0] : result[TargetNumber]);
-                    result.Clear();
-                }
-                else
-                {
-                    Tmp = ((AllReachableTargets.Count - 1) < TargetNumber ? result[0] : result[TargetNumber]);
-                    result.Clear();
-                    result.Add(Tmp);
-                }
+                TargetList.Add(baseCoords);
             }
-            return result;
+
+            return AllReachableTargets.Contains(TargetList.LastOrDefault()) ? TargetList : AllReachableTargets;
+            //int TargetNumber = UnitNumber < MaxTargets ? UnitNumber : UnitNumber % MaxTargets;
+            //Vector2Int Tmp;
+
+            //if (result.Count == 0)
+            //{
+            //    TargetList.Clear();
+            //    Vector2Int enemyBase = runtimeModel.RoMap.Bases[IsPlayerUnitBrain ? RuntimeModel.PlayerId : RuntimeModel.BotPlayerId];
+            //    if (IsTargetInRange(enemyBase))
+            //        result.Add(enemyBase);
+            //    else
+            //        TargetList.Add(enemyBase);
+
+            //}
+            //else
+            //{
+            //    SortByDistanceToOwnBase(result);
+            //    if (AllReachableTargets.Count == 0)
+            //    {
+            //        TargetList.Add((result.Count - 1) < TargetNumber ? result[0] : result[TargetNumber]);
+            //        result.Clear();
+            //    }
+            //    else
+            //    {
+            //        Tmp = ((AllReachableTargets.Count - 1) < TargetNumber ? result[0] : result[TargetNumber]);
+            //        result.Clear();
+            //        result.Add(Tmp);
+            //    }
+            //}
+            //return result;
             ///////////////////////////////////////
         }
 

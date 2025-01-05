@@ -14,16 +14,16 @@ namespace Assets.Scripts.UnitBrains.Player
 {
     public class RecommendatedTarget
     {
-        public static RecommendatedTarget Instance
-        {
-            get
-            {
-                if (_instance is null)
-                    _instance = new RecommendatedTarget();
+        //public RecommendatedTarget Instance
+        //{
+        //    get
+        //    {
+        //        if (_instance is null)
+        //            _instance = new RecommendatedTarget();
 
-                return _instance;
-            }
-        }
+        //        return _instance;
+        //    }
+        //}
 
         private static RecommendatedTarget _instance;
 
@@ -33,16 +33,21 @@ namespace Assets.Scripts.UnitBrains.Player
         public IReadOnlyUnit RecommendationTarget { get; private set; }
         public Vector2Int RecommendationPosition { get; private set; }
 
-        private RecommendatedTarget()
+        public Vector2Int PlayerBase => _runtimeModel.RoMap.Bases[RuntimeModel.PlayerId];
+        public Vector2Int EnemyBase => _runtimeModel.RoMap.Bases[RuntimeModel.BotPlayerId];
+        public RecommendatedTarget(IReadOnlyRuntimeModel runtimeModel, TimeUtil timeUtil)
         {
-            _runtimeModel = ServiceLocator.Get<IReadOnlyRuntimeModel>();
-            _timeUtil = ServiceLocator.Get<TimeUtil>();
+            //_runtimeModel = ServiceLocator.Get<IReadOnlyRuntimeModel>();
+            //_timeUtil = ServiceLocator.Get<TimeUtil>();
+            _runtimeModel = runtimeModel;
 
             _timeUtil.AddUpdateAction(Update);
         }
 
         private void Update(float time)
         {
+            if (_runtimeModel == null) 
+                return;
             RecommendationTarget = GetTargetRecommendatedUnit();
             RecommendationPosition = GetTargetRecommendatedPosition();
         }

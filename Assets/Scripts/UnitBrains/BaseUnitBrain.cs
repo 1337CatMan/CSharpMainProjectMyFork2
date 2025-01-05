@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Assets.Scripts.UnitBrains.Player;
 using Model;
 using Model.Runtime.Projectiles;
 using Model.Runtime.ReadOnly;
@@ -12,6 +13,7 @@ namespace UnitBrains
 {
     public abstract class BaseUnitBrain
     {
+        public virtual RecommendatedTarget RecommendationTarget => unit.CurrentRecommendatedTarget;
         public virtual string TargetUnitName => string.Empty;
         public virtual bool IsPlayerUnitBrain => true;
         public virtual BaseUnitPath ActivePath => _activePath;
@@ -19,6 +21,7 @@ namespace UnitBrains
         protected Unit unit { get; private set; }
         protected IReadOnlyRuntimeModel runtimeModel => ServiceLocator.Get<IReadOnlyRuntimeModel>();
         protected BaseUnitPath _activePath = null;
+        protected RecommendatedTarget recommendatedTarget { get; private set; }
         
         private readonly Vector2[] _projectileShifts = new Vector2[]
         {

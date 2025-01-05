@@ -31,12 +31,12 @@ namespace UnitBrains.Player
             {
                 return unit.Pos;
             }
-            IReadOnlyUnit recomendUnit = RecommendatedTarget.Instance.RecommendationTarget;
-            Vector2Int recomendPosition = RecommendatedTarget.Instance.RecommendationPosition;
+            IReadOnlyUnit recomendedUnit = recommendatedTarget.RecommendationTarget;
+            Vector2Int recomendPosition = recommendatedTarget.RecommendationPosition;
 
             if (IsDoubleRangeAttack(recomendPosition))
             {
-                recomendPosition = RecommendatedTarget.Instance.RecommendationPosition;
+                recomendPosition = recommendatedTarget.RecommendationPosition;
             }
 
             if (unit.Pos.Equals(recomendPosition))
